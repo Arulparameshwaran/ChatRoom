@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat Room</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+    }
+
+    #login, #chatBox {
+      width: 400px;
+      margin: auto;
+      margin-top: 60px;
+      padding: 20px;
+      background: white;
+      border-radius: 6px;
+    }
+
+    #chat {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      list-style: none;
+    }
+
+    .me {
+      text-align: right;
+      color: blue;
+    }
+
+    .other {
+      text-align: left;
+      color: green;
+    }
+
+    .system {
+      text-align: center;
+      color: gray;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="login">
+  <h3>Enter Username</h3>
+  <input id="username" placeholder="Your name">
+  <br><br>
+  <button onclick="login()">Join Chat</button>
+</div>
+
+<div id="chatBox" style="display:none;">
+  <h3>Chat Room</h3>
+
+  <ul id="chat"></ul>
+
+  <input id="message" placeholder="Type message">
+  <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+  let stompClient = null;
+  let currentUser = "";
+
+  function login() {
+    currentUser = document.getElementById("username").value;
+    if (currentUser.trim() === "") return;
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("chatBox").style.display = "block";
+
+    connect();
+  }
+
+  function connect() {
+    const socket = new SockJS('/chat');
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function () {
+
+      stompClient.subscribe('/topic/messages', function (msg) {
+        const message = JSON.parse(msg.body);
+        showMessage(message);
+      });
+
+      stompClient.send("/app/sendMessage", {}, JSON.stringify({
+        sender: "SYSTEM",
+        content: currentUser + " joined the chat"
+      }));
+    });
+  }
+
+  function sendMessage() {
+    const text = document.getElementById("message").value;
+    if (text.trim() === "") return;
+
+    stompClient.send("/app/sendMessage", {}, JSON.stringify({
+      sender: currentUser,
+      content: text
+    }));
+
+    document.getElementById("message").value = "";
+  }
+
+  function showMessage(message) {
+    const li = document.createElement("li");
+
+    if (message.sender === "SYSTEM") {
+      li.className = "system";
+      li.textContent = message.content;
+    } else if (message.sender === currentUser) {
+      li.className = "me";
+      li.textContent = "You: " + message.content;
+    } else {
+      li.className = "other";
+      li.textContent = message.sender + ": " + message.content;
+    }
+
+    const chat = document.getElementById("chat");
+    chat.appendChild(li);
+    chat.scrollTop = chat.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
