@@ -3,10 +3,12 @@ package com.chatroom.chatapp.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.chatroom.chatapp.model.ChatMessage;
-import com.chatroom.chatapp.service.ChatService;
+import com.chatroom.chatapp.model.*;
+import com.chatroom.chatapp.repository.MessageRepository;
+import com.chatroom.chatapp.service.*;
 
 @RestController
 @RequestMapping("/api/chat")

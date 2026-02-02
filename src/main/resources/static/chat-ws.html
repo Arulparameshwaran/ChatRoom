@@ -1,132 +1,252 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Chat Room</title>
+<meta charset="UTF-8">
+<title>Chat Room</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #f4f4f4;
-    }
+<style>
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
 
-    #login, #chatBox {
-      width: 400px;
-      margin: auto;
-      margin-top: 60px;
-      padding: 20px;
-      background: white;
-      border-radius: 6px;
-    }
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #020617, #0f172a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
 
-    #chat {
-      height: 300px;
-      overflow-y: auto;
-      border: 1px solid #ddd;
-      padding: 10px;
-      list-style: none;
-    }
+/* ---------- LOGIN CARD ---------- */
+.card {
+  background: #020617;
+  width: 360px;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
 
-    .me {
-      text-align: right;
-      color: blue;
-    }
+.card h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #38bdf8;
+}
 
-    .other {
-      text-align: left;
-      color: green;
-    }
+input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: #0f172a;
+  color: white;
+}
 
-    .system {
-      text-align: center;
-      color: gray;
-      font-style: italic;
-    }
-  </style>
+button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #38bdf8;
+  color: black;
+  margin-top: 8px;
+}
+
+button.secondary {
+  background: transparent;
+  border: 1px solid #38bdf8;
+  color: #38bdf8;
+}
+
+#error {
+  color: #f87171;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* ---------- CHAT ---------- */
+#chatBox {
+  display: none;
+  width: 90%;
+  max-width: 800px;
+  height: 90vh;
+  background: #020617;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+}
+
+#chatHeader {
+  padding: 15px;
+  background: #0f172a;
+  text-align: center;
+  font-weight: bold;
+  color: #38bdf8;
+}
+
+#chat {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.msg {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.me {
+  align-self: flex-end;
+  background: #2563eb;
+}
+
+.other {
+  align-self: flex-start;
+  background: #334155;
+}
+
+.system {
+  align-self: center;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ---------- INPUT ---------- */
+#inputBox {
+  display: flex;
+  padding: 10px;
+  background: #0f172a;
+}
+
+#message {
+  flex: 1;
+  margin-right: 8px;
+}
+</style>
 </head>
 
 <body>
 
-<div id="login">
-  <h3>Enter Username</h3>
-  <input id="username" placeholder="Your name">
-  <br><br>
-  <button onclick="login()">Join Chat</button>
+<!-- LOGIN -->
+<div id="login" class="card">
+  <h2>Chat Login</h2>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <button class="secondary" onclick="register()">Register</button>
+  <div id="error"></div>
 </div>
 
-<div id="chatBox" style="display:none;">
-  <h3>Chat Room</h3>
+<!-- CHAT -->
+<div id="chatBox">
+  <div id="chatHeader">Real-Time Chat Room</div>
+  <div id="chat"></div>
 
-  <ul id="chat"></ul>
-
-  <input id="message" placeholder="Type message">
-  <button onclick="sendMessage()">Send</button>
+  <div id="inputBox">
+    <input id="message" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
 </div>
 
 <script>
-  let stompClient = null;
-  let currentUser = "";
+let stompClient = null;
+let currentUser = "";
 
-  function login() {
-    currentUser = document.getElementById("username").value;
-    if (currentUser.trim() === "") return;
+function login() {
+  fetch('/auth/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      username: username.value,
+      password: password.value
+    })
+  })
+  .then(r => r.text())
+  .then(data => {
+    if (data === "SUCCESS") {
+      currentUser = username.value;
+      login.style.display = "none";
+      chatBox.style.display = "flex";
+      connect();
+    } else {
+      error.textContent = "Invalid username or password";
+    }
+  });
+}
 
-    document.getElementById("login").style.display = "none";
-    document.getElementById("chatBox").style.display = "block";
+function register() {
+  fetch('/auth/register', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      username: username.value,
+      password: password.value
+    })
+  })
+  .then(r => r.text())
+  .then(alert);
+}
 
-    connect();
-  }
+function connect() {
+  const socket = new SockJS('/chat');
+  stompClient = Stomp.over(socket);
 
-  function connect() {
-    const socket = new SockJS('/chat');
-    stompClient = Stomp.over(socket);
-
-    stompClient.connect({}, function () {
-
-      stompClient.subscribe('/topic/messages', function (msg) {
-        const message = JSON.parse(msg.body);
-        showMessage(message);
-      });
-
-      stompClient.send("/app/sendMessage", {}, JSON.stringify({
-        sender: "SYSTEM",
-        content: currentUser + " joined the chat"
-      }));
+  stompClient.connect({}, () => {
+    stompClient.subscribe('/topic/messages', msg => {
+      showMessage(JSON.parse(msg.body));
     });
-  }
-
-  function sendMessage() {
-    const text = document.getElementById("message").value;
-    if (text.trim() === "") return;
 
     stompClient.send("/app/sendMessage", {}, JSON.stringify({
-      sender: currentUser,
-      content: text
+      sender: "SYSTEM",
+      content: currentUser + " joined the chat"
     }));
+  });
+}
 
-    document.getElementById("message").value = "";
+function sendMessage() {
+  if (message.value.trim() === "") return;
+
+  stompClient.send("/app/sendMessage", {}, JSON.stringify({
+    sender: currentUser,
+    content: message.value
+  }));
+
+  message.value = "";
+}
+
+function showMessage(msg) {
+  const div = document.createElement("div");
+
+  if (msg.sender === "SYSTEM") {
+    div.className = "system";
+    div.textContent = msg.content;
+  } else if (msg.sender === currentUser) {
+    div.className = "msg me";
+    div.textContent = msg.content;
+  } else {
+    div.className = "msg other";
+    div.textContent = msg.sender + ": " + msg.content;
   }
 
-  function showMessage(message) {
-    const li = document.createElement("li");
-
-    if (message.sender === "SYSTEM") {
-      li.className = "system";
-      li.textContent = message.content;
-    } else if (message.sender === currentUser) {
-      li.className = "me";
-      li.textContent = "You: " + message.content;
-    } else {
-      li.className = "other";
-      li.textContent = message.sender + ": " + message.content;
-    }
-
-    const chat = document.getElementById("chat");
-    chat.appendChild(li);
-    chat.scrollTop = chat.scrollHeight;
-  }
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
 </script>
 
 </body>
