@@ -29,4 +29,10 @@ public class ChatWebSocketController {
 
         return message; // broadcast
     }
+    @MessageMapping("/typing")
+    @SendTo("/topic/typing")
+    public String typing(String username) {
+        return username;
+    }
+
 }

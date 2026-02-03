@@ -83,7 +83,6 @@ button.secondary {
   background: #020617;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-  display: flex;
   flex-direction: column;
 }
 
@@ -103,6 +102,39 @@ button.secondary {
   flex-direction: column;
   gap: 10px;
 }
+/* ---------- CHAT INPUT AREA ---------- */
+#inputBox {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background: #0f172a;
+}
+
+#message {
+  flex: 1;
+  height: 42px;
+  font-size: 14px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* ---------- CHAT BUTTONS ---------- */
+.chat-btn {
+  width: auto;
+  min-width: 80px;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+/* ---------- LOGOUT BUTTON ---------- */
+#logoutBtn {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+  float: right;
+}
+
 
 .msg {
   max-width: 70%;
@@ -137,6 +169,7 @@ button.secondary {
 #message {
   flex: 1;
   margin-right: 8px;
+  height:46px;
 }
 </style>
 </head>
@@ -155,18 +188,31 @@ button.secondary {
 
 <!-- CHAT -->
 <div id="chatBox">
-  <div id="chatHeader">Real-Time Chat Room</div>
+
+  <div id="chatHeader">
+    Real-Time Chat Room
+    <button id="logoutBtn" onclick="logout()">Logout</button>
+  </div>
+
   <div id="chat"></div>
+
+  <div id="typing" style="font-size:12px; opacity:0.7;"></div>
 
   <div id="inputBox">
     <input id="message" placeholder="Type a message...">
-    <button onclick="sendMessage()">Send</button>
+    <button class="chat-btn" onclick="sendMessage()">Send</button>
   </div>
+
 </div>
 
 <script>
 let stompClient = null;
 let currentUser = "";
+let typingTimeout;
+
+document.getElementById("message").addEventListener("input", () => {
+  stompClient.send("/app/typing", {}, currentUser);
+});
 
 function login() {
   fetch('/auth/login', {
@@ -181,8 +227,11 @@ function login() {
   .then(data => {
     if (data === "SUCCESS") {
       currentUser = username.value;
+      const login=document.getElementById("login");
+      const chatBox=document.getElementById("chatBox");
       login.style.display = "none";
       chatBox.style.display = "flex";
+      loadHistory();
       connect();
     } else {
       error.textContent = "Invalid username or password";
@@ -212,12 +261,63 @@ function connect() {
       showMessage(JSON.parse(msg.body));
     });
 
+    stompClient.subscribe('/topic/typing', msg => {
+    	  if (msg.body !== currentUser) {
+    	    typing.textContent = msg.body + " is typing...";
+    	    clearTimeout(typingTimeout);
+    	    typingTimeout = setTimeout(() => typing.textContent = "", 1000);
+    	  }
+    	});
+
     stompClient.send("/app/sendMessage", {}, JSON.stringify({
       sender: "SYSTEM",
       content: currentUser + " joined the chat"
     }));
   });
 }
+function logout() {
+
+	  // Send system message (optional)
+	  if (stompClient && stompClient.connected) {
+	    stompClient.send("/app/sendMessage", {}, JSON.stringify({
+	      sender: "SYSTEM",
+	      content: currentUser + " left the chat"
+	    }));
+	    stompClient.disconnect();
+	  }
+
+	  // Reset variables
+	  currentUser = "";
+	  stompClient = null;
+
+	  // Clear chat UI
+	  document.getElementById("chat").innerHTML = "";
+	  document.getElementById("typing").textContent = "";
+
+	  // Clear input fields
+	  document.getElementById("message").value = "";
+	  document.getElementById("username").value = "";
+	  document.getElementById("password").value = "";
+	  document.getElementById("error").textContent = "";
+
+	  // Switch screens
+	  document.getElementById("chatBox").style.display = "none";
+	  document.getElementById("login").style.display = "block";
+	}
+
+
+function loadHistory() {
+	  fetch('/chat/history')
+	    .then(res => res.json())
+	    .then(data => {
+	      data.reverse().forEach(msg => {
+	        showMessage({
+	          sender: msg.sender,
+	          content: msg.content
+	        });
+	      });
+	    });
+	}
 
 function sendMessage() {
   if (message.value.trim() === "") return;
