@@ -5,6 +5,7 @@ public class ChatMessage {
     private String sender;
     private String content;
     private String timestamp;
+    private String sentiment;
 
     public ChatMessage() {
     }
@@ -38,4 +39,12 @@ public class ChatMessage {
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
+
+	public String getSentiment() {
+		return sentiment;
+	}
+
+	public void setSentiment(String sentiment) {
+		this.sentiment = sentiment;
+	}
 }

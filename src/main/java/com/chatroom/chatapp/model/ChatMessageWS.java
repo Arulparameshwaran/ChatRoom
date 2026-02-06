@@ -4,7 +4,15 @@ public class ChatMessageWS {
 
     private String sender;
     private String content;
+    private String sentiment;
 
+    public String getSentiment() {
+        return sentiment;
+    }
+
+    public void setSentiment(String sentiment) {
+        this.sentiment = sentiment;
+    }
     public ChatMessageWS() {
     }
 

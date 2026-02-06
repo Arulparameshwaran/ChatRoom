@@ -311,10 +311,12 @@ function loadHistory() {
 	    .then(res => res.json())
 	    .then(data => {
 	      data.reverse().forEach(msg => {
-	        showMessage({
-	          sender: msg.sender,
-	          content: msg.content
-	        });
+	    	  showMessage({
+	    		  sender: msg.sender,
+	    		  content: msg.content,
+	    		  sentiment: msg.sentiment
+	    		});
+
 	      });
 	    });
 	}
@@ -331,22 +333,39 @@ function sendMessage() {
 }
 
 function showMessage(msg) {
-  const div = document.createElement("div");
+	  const div = document.createElement("div");
 
-  if (msg.sender === "SYSTEM") {
-    div.className = "system";
-    div.textContent = msg.content;
-  } else if (msg.sender === currentUser) {
-    div.className = "msg me";
-    div.textContent = msg.content;
-  } else {
-    div.className = "msg other";
-    div.textContent = msg.sender + ": " + msg.content;
-  }
+	  // ----- SENTIMENT HANDLING -----
+	  let emoji = "😐";
+	  let color = "#94a3b8"; // neutral
 
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
+	  if (msg.sentiment === "POSITIVE") {
+	    emoji = "😊";
+	    color = "#22c55e";
+	  } else if (msg.sentiment === "NEGATIVE") {
+	    emoji = "😞";
+	    color = "#ef4444";
+	  }
+
+	  if (msg.sender === "SYSTEM") {
+	    div.className = "system";
+	    div.textContent = msg.content;
+	  }
+	  else if (msg.sender === currentUser) {
+	    div.className = "msg me";
+	    div.textContent = msg.content + " " + emoji;
+	    div.style.color = color;
+	  }
+	  else {
+	    div.className = "msg other";
+	    div.textContent = msg.sender + ": " + msg.content + " " + emoji;
+	    div.style.color = color;
+	  }
+
+	  chat.appendChild(div);
+	  chat.scrollTop = chat.scrollHeight;
+	}
+
 </script>
 
 </body>
