@@ -34,7 +34,7 @@ public class ChatWebSocketController {
         ChatMessageEntity entity = new ChatMessageEntity();
         entity.setSender(message.getSender());
         entity.setContent(message.getContent());
-        entity.setSentiment(sentiment);   // ✅ ADD THIS
+        entity.setEmotion(sentiment);   // ✅ ADD THIS
 
         repository.save(entity);
 

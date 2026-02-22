@@ -337,15 +337,38 @@ function showMessage(msg) {
 
 	  // ----- SENTIMENT HANDLING -----
 	  let emoji = "😐";
-	  let color = "#94a3b8"; // neutral
+let color = "#94a3b8";
 
-	  if (msg.sentiment === "POSITIVE") {
-	    emoji = "😊";
-	    color = "#22c55e";
-	  } else if (msg.sentiment === "NEGATIVE") {
-	    emoji = "😞";
-	    color = "#ef4444";
-	  }
+switch(msg.sentiment) {
+  case "joy":
+  case "love":
+    emoji = "😊";
+    color = "#22c55e";
+    break;
+
+  case "anger":
+    emoji = "😡";
+    color = "#ef4444";
+    break;
+
+  case "sadness":
+    emoji = "😢";
+    color = "#3b82f6";
+    break;
+
+  case "fear":
+    emoji = "😨";
+    color = "#f97316";
+    break;
+
+  case "surprise":
+    emoji = "😲";
+    color = "#eab308";
+    break;
+
+  default:
+    emoji = "😐";
+}
 
 	  if (msg.sender === "SYSTEM") {
 	    div.className = "system";

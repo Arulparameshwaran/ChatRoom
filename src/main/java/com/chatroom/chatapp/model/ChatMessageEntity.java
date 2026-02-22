@@ -23,14 +23,14 @@ public class ChatMessageEntity {
     public void onCreate() {
         timestamp = LocalDateTime.now();
     }
-    private String sentiment;
+    private String emotion;
 
-    public String getSentiment() {
-        return sentiment;
+    public String getEmotion() {
+        return emotion;
     }
 
-    public void setSentiment(String sentiment) {
-        this.sentiment = sentiment;
+    public void setEmotion(String sentiment) {
+        this.emotion = sentiment;
     }
 
     public Long getId() {
