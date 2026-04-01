@@ -16,7 +16,7 @@ public class SentimentService {
 
     try 
     {
-        String url = "http://127.0.0.1:5000/emotion_api";
+        String url = "http://127.0.0.1:8000/emotion_api";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

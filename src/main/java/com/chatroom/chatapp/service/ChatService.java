@@ -18,14 +18,14 @@ public class ChatService {
 
     public void saveMessage(ChatMessage message) {
 
-        // ✅ CALL PYTHON SERVICE
+        // CALL PYTHON SERVICE
         String sentiment =
                 sentimentService.analyzeSentiment(message.getContent());
 
-        // ✅ SET SENTIMENT
+        //  SET SENTIMENT
         message.setSentiment(sentiment);
 
-        // ✅ SAVE MESSAGE
+        //  SAVE MESSAGE
         messages.add(message);
 
         System.out.println(
